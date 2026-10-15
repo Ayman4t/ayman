@@ -37,7 +37,7 @@ input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;borde
 @keyframes pulse{50%{opacity:.3}}
 #hud{position:fixed;top:max(12px,env(safe-area-inset-top));left:0;right:0;z-index:10;display:none;justify-content:center;pointer-events:none;font-size:14px;color:var(--muted);text-align:center;padding:0 16px}
 #hud span{background:rgba(10,14,34,.6);border:1px solid rgba(0,243,255,.25);border-radius:999px;padding:8px 16px;display:inline-flex;gap:8px;align-items:center}
-#card{position:fixed;z-index:25;left:50%;top:50%;width:min(88vw,420px);transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:28px 24px 22px;text-align:center;border-radius:26px;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 0 40px rgba(0,243,255,.35),0 0 90px rgba(188,19,254,.3),inset 0 0 30px rgba(255,255,255,.05);transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1)}
+#card{position:fixed;z-index:25;left:50%;top:50%;width:min(88vw,420px);transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:28px 24px 22px;text-align:center;border-radius:26px;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(8,10,28,.88);border:1px solid rgba(255,255,255,.28);box-shadow:0 0 40px rgba(0,243,255,.35),0 0 90px rgba(188,19,254,.3),inset 0 0 30px rgba(255,255,255,.05);transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1)}
 #card.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 #card .t{color:var(--green);font-size:13px;margin-bottom:14px;text-shadow:0 0 10px var(--green)}
 #msg{font-size:clamp(22px,6.5vw,30px);font-weight:700;line-height:1.7;min-height:3.4em;text-shadow:0 0 14px var(--cyan),0 0 30px var(--violet);word-break:break-word}
@@ -190,8 +190,8 @@ function drawOrb(x,y,r,t,k=1){
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*2.4,0,7);ctx.fill();
   g=ctx.createRadialGradient(x-r*.25,y-r*.3,r*.05,x,y,r);
   g.addColorStop(0,'#fff');g.addColorStop(.35,'#7ffaff');g.addColorStop(.75,'#00f3ff');g.addColorStop(1,'#bc13fe');
-  ctx.fillStyle=g;ctx.shadowColor='#00f3ff';ctx.shadowBlur=30;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
-  ctx.shadowBlur=0;ctx.lineWidth=2.5;
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+  ctx.lineWidth=2.5;
   ctx.strokeStyle='rgba(16,185,129,.95)';ctx.setLineDash([r*.35,r*.2]);ctx.lineDashOffset=-t*40;
   ctx.beginPath();ctx.arc(x,y,r*1.25,0,7);ctx.stroke();
   ctx.strokeStyle='rgba(188,19,254,.9)';ctx.setLineDash([r*.15,r*.3]);ctx.lineDashOffset=t*60;
@@ -203,7 +203,7 @@ function drawTrail(){
   for(const p of trail){
     const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
     g.addColorStop(0,'rgba(0,243,255,'+p.a*.5+')');g.addColorStop(1,'rgba(188,19,254,0)');
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();p.a-=.045;p.r*=.97;
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();p.a-=.07;p.r*=.97;
   }
   trail=trail.filter(p=>p.a>0);ctx.restore();
 }
@@ -213,7 +213,7 @@ function pushTrail(){if(orb.vis)trail.push({x:orb.x,y:orb.y,r:orb.r*1.1,a:1})}
 function explode(){
   state='boom';orb.vis=false;
   const cx=orb.x,cy=orb.y;
-  for(let i=0;i<420;i++){
+  for(let i=0;i<260;i++){
     const a=Math.random()*Math.PI*2,s=Math.pow(Math.random(),.5)*Math.max(W,H)*.022+1;
     particles.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:70+Math.random()*80,max:150,size:1.2+Math.random()*3.2,c:COLORS[i%3]});
   }
@@ -266,7 +266,7 @@ function stepSender(t){
       state='gone';orb.vis=false;dragging=false;if(navigator.vibrate)navigator.vibrate(40);
       hud('عبرت الكرة إلى الهاتف الثاني ✨',true);
     }else if(orb.x+r>W){
-      send({t:'orb',xo:orb.x-W,yr:orb.y/H,r,vx:orb.vx,vy:orb.vy,msg:secretMsg});sentVisible=true;
+      const nt=performance.now();if(nt-(orb.gt||0)>=33){send({t:'orb',xo:orb.x-W,yr:orb.y/H,r,vx:orb.vx,vy:orb.vy});orb.gt=nt}sentVisible=true;
     }else if(sentVisible){send({t:'hide'});sentVisible=false}
   }
 }
@@ -297,7 +297,7 @@ function drawFX(){
   rings=rings.filter(r=>r.a>0);
   for(const p of particles){
     p.x+=p.vx;p.y+=p.vy;p.vx*=.985;p.vy=p.vy*.985+.03;p.life--;
-    ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=8;
+    ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.c;
     ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,7);ctx.fill();
   }
   particles=particles.filter(p=>p.life>0);
