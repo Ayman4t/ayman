@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05050a">
+<title>Quantum Orb - القنبلة الضوئية العابرة للشاشات</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05050a;--cyan:#00f3ff;--violet:#bc13fe;--green:#10b981;--text:#e8f6ff;--muted:#8a94b8}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Rubik','Segoe UI',Tahoma,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+body{background-image:linear-gradient(rgba(0,243,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(0,243,255,.055) 1px,transparent 1px);background-size:40px 40px;background-position:center}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(5,5,10,.85) 100%)}
+canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;touch-action:none}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;z-index:30;pointer-events:none}
+.screen{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));background:rgba(5,5,10,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.screen.on{display:flex}
+.box{width:100%;max-width:380px;text-align:center}
+h1{font-size:clamp(30px,9vw,44px);font-weight:800;letter-spacing:.5px;background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(188,19,254,.45))}
+.sub{color:var(--muted);margin:10px 0 28px;line-height:1.7;font-size:15px}
+.btn{display:block;width:100%;font:inherit;font-weight:700;font-size:17px;color:var(--text);background:rgba(10,14,34,.7);border:1.5px solid var(--cyan);border-radius:16px;padding:16px;margin-top:14px;cursor:pointer;box-shadow:0 0 18px rgba(0,243,255,.25),inset 0 0 14px rgba(0,243,255,.08);transition:transform .15s,box-shadow .15s}
+.btn:active{transform:scale(.97)}
+.btn small{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:4px}
+.btn.v{border-color:var(--violet);box-shadow:0 0 18px rgba(188,19,254,.3),inset 0 0 14px rgba(188,19,254,.1)}
+.btn.g{border-color:var(--green);box-shadow:0 0 18px rgba(16,185,129,.3)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.code{font-size:56px;font-weight:800;letter-spacing:14px;padding-inline-start:14px;color:var(--cyan);text-shadow:0 0 22px var(--cyan);direction:ltr;margin:6px 0 4px}
+.label{color:var(--muted);font-size:14px}
+input{width:100%;font:inherit;color:var(--text);background:rgba(10,14,34,.8);border:1.5px solid rgba(188,19,254,.6);border-radius:14px;padding:14px;text-align:center;font-size:17px;outline:none;margin-top:10px;user-select:text;-webkit-user-select:text}
+input:focus{border-color:var(--violet);box-shadow:0 0 16px rgba(188,19,254,.45)}
+input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;border-color:rgba(0,243,255,.6)}
+.status{margin-top:16px;font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center;justify-content:center}
+.dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}
+.dot.ok{background:var(--green);box-shadow:0 0 10px var(--green)}
+.dot.wait{background:var(--violet);box-shadow:0 0 10px var(--violet);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+#hud{position:fixed;top:max(12px,env(safe-area-inset-top));left:0;right:0;z-index:10;display:none;justify-content:center;pointer-events:none;font-size:14px;color:var(--muted);text-align:center;padding:0 16px}
+#hud span{background:rgba(10,14,34,.6);border:1px solid rgba(0,243,255,.25);border-radius:999px;padding:8px 16px;display:inline-flex;gap:8px;align-items:center}
+#card{position:fixed;z-index:25;left:50%;top:50%;width:min(88vw,420px);transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:28px 24px 22px;text-align:center;border-radius:26px;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 0 40px rgba(0,243,255,.35),0 0 90px rgba(188,19,254,.3),inset 0 0 30px rgba(255,255,255,.05);transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1)}
+#card.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
+#card .t{color:var(--green);font-size:13px;margin-bottom:14px;text-shadow:0 0 10px var(--green)}
+#msg{font-size:clamp(22px,6.5vw,30px);font-weight:700;line-height:1.7;min-height:3.4em;text-shadow:0 0 14px var(--cyan),0 0 30px var(--violet);word-break:break-word}
+#msg::after{content:"▍";color:var(--cyan);animation:pulse .8s infinite;margin-inline-start:2px}
+#msg.done::after{content:""}
+#card .btn{margin-top:18px;padding:12px;font-size:15px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="flash"></div>
+<div id="hud"><span><i class="dot" id="hdot"></i><b id="htxt"></b></span></div>
+
+<section class="screen on" id="sRole">
+  <div class="box">
+    <h1>Quantum Orb</h1>
+    <p class="sub">القنبلة الضوئية العابرة للشاشات<br>اجمع هاتفين جنباً إلى جنب وحوّلهما إلى شاشة واحدة ممتدة</p>
+    <button class="btn" id="bSend">الهاتف الأول (اليسار - المرسل)<small>تنشئ الغرفة وتحرك الكرة</small></button>
+    <button class="btn v" id="bRecv">الهاتف الثاني (اليمين - المستلم)<small>تدخل كود الغرفة وتستقبل الكرة</small></button>
+  </div>
+</section>
+
+<section class="screen" id="sSend">
+  <div class="box">
+    <div class="label">كود الغرفة</div>
+    <div class="code" id="code">····</div>
+    <p class="sub" style="margin:6px 0 4px">أدخل هذا الكود في الهاتف الثاني</p>
+    <input id="secret" maxlength="120" placeholder="الرسالة السرية (اختياري)" value="أنتما الآن شاشة واحدة ✨">
+    <div class="status"><i class="dot wait" id="sdot"></i><span id="sst">جارٍ إنشاء الغرفة…</span></div>
+    <button class="btn g" id="bStart" disabled>ابدأ</button>
+  </div>
+</section>
+
+<section class="screen" id="sRecv">
+  <div class="box">
+    <h1 style="font-size:32px">الهاتف الثاني</h1>
+    <p class="sub">ضع هذا الهاتف على يمين الهاتف الأول، ثم أدخل الكود الظاهر عليه</p>
+    <input id="room" class="num" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
+    <div class="status"><i class="dot" id="rdot"></i><span id="rst">أدخل الكود المكوّن من 4 أرقام</span></div>
+    <button class="btn" id="bConn">اتصال</button>
+  </div>
+</section>
+
+<div id="card">
+  <div class="t">الرسالة السرية</div>
+  <div id="msg"></div>
+  <button class="btn v" id="bAgain">أعد الكرة</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d');
+const COLORS=['#00f3ff','#bc13fe','#10b981'];
+let W=0,H=0,dpr=1;
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+
+let role=null,peer=null,conn=null,connected=false,secretMsg='';
+const PREFIX='quantum-orb-';
+const R=()=>Math.max(38,Math.min(70,Math.min(W,H)*.11));
+
+/* ---------- Orb state ---------- */
+const orb={x:0,y:0,vx:0,vy:0,r:50,vis:false};
+let trail=[],particles=[],rings=[],gather=[];
+let state='idle'; // sender: play|gone ; receiver: idle|incoming|glide|gather|boom|card
+let dragging=false,ptr={x:0,y:0},sentVisible=false,lastPkt=0,gatherT=0;
+
+/* ---------- UI helpers ---------- */
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id))}
+function hud(txt,ok){$('hud').style.display='flex';$('htxt').textContent=txt;$('hdot').className='dot '+(ok?'ok':'wait')}
+function send(o){if(conn&&conn.open)try{conn.send(o)}catch(e){}}
+
+/* ---------- Roles ---------- */
+$('bSend').onclick=()=>{role='send';show('sSend');startSender()};
+$('bRecv').onclick=()=>{role='recv';show('sRecv');$('room').focus()};
+
+function startSender(attempt=0){
+  const code=String(Math.floor(1000+Math.random()*9000));
+  $('code').textContent=code;
+  if(typeof Peer==='undefined'){$('sst').textContent='تعذّر تحميل PeerJS، تحقق من الإنترنت';return}
+  peer=new Peer(PREFIX+code);
+  peer.on('open',()=>{$('sst').textContent='بانتظار الهاتف الثاني…'});
+  peer.on('error',e=>{
+    if(e.type==='unavailable-id'&&attempt<6){peer.destroy();startSender(attempt+1)}
+    else $('sst').textContent='خطأ في الاتصال: '+e.type;
+  });
+  peer.on('connection',c=>{
+    conn=c;
+    c.on('open',()=>{connected=true;$('sdot').className='dot ok';$('sst').textContent='تم الربط بنجاح ✓';$('bStart').disabled=false;
+      secretMsg=$('secret').value.trim();send({t:'hello'})});
+    c.on('data',d=>{if(d.t==='reset')respawn()});
+    c.on('close',()=>{connected=false;$('sdot').className='dot wait';$('sst').textContent='انقطع الاتصال، بانتظار الهاتف الثاني…';$('bStart').disabled=true;hud('انقطع الاتصال',false)});
+  });
+}
+$('bStart').onclick=()=>{secretMsg=$('secret').value.trim()||'أنتما الآن شاشة واحدة ✨';show('');respawn();hud('اسحب الكرة نحو الحافة اليمنى وأفلتها',true);requestAnimationFrame(loop)};
+
+function respawn(){orb.r=R();orb.x=W*.3;orb.y=H*.5;orb.vx=orb.vy=0;orb.vis=true;state='play';trail=[];sentVisible=false;
+  if(connected)hud('اسحب الكرة نحو الحافة اليمنى وأفلتها',true)}
+
+$('bConn').onclick=connectReceiver;
+$('room').addEventListener('keydown',e=>{if(e.key==='Enter')connectReceiver()});
+function connectReceiver(){
+  const code=$('room').value.trim();
+  if(!/^\d{4}$/.test(code)){$('rst').textContent='الكود يجب أن يكون 4 أرقام';return}
+  if(typeof Peer==='undefined'){$('rst').textContent='تعذّر تحميل PeerJS، تحقق من الإنترنت';return}
+  $('rdot').className='dot wait';$('rst').textContent='جارٍ الاتصال…';$('bConn').disabled=true;
+  if(peer)peer.destroy();
+  peer=new Peer();
+  peer.on('open',()=>{
+    conn=peer.connect(PREFIX+code,{reliable:true});
+    conn.on('open',()=>{connected=true;$('rdot').className='dot ok';show('');state='idle';hud('تم الربط ✓ انتظر وصول الكرة من الهاتف الأول',true);requestAnimationFrame(loop)});
+    conn.on('data',onRecv);
+    conn.on('close',()=>{connected=false;hud('انقطع الاتصال',false)});
+  });
+  peer.on('error',e=>{$('bConn').disabled=false;$('rdot').className='dot';$('rst').textContent=e.type==='peer-unavailable'?'الكود غير صحيح أو الغرفة غير موجودة':'خطأ في الاتصال: '+e.type});
+}
+
+/* ---------- Receiver messages ---------- */
+function onRecv(d){
+  if(d.msg)secretMsg=d.msg;
+  if(state==='gather'||state==='boom'||state==='card')return;
+  if(d.t==='orb'){
+    orb.r=d.r;orb.x=d.xo;orb.y=d.yr*H;orb.vx=d.vx;orb.vy=d.vy;orb.vis=true;state='incoming';lastPkt=performance.now();
+  }else if(d.t==='own'){
+    orb.r=d.r;orb.x=d.xo;orb.y=d.yr*H;orb.vx=Math.max(d.vx,3);orb.vy=d.vy*.3;orb.vis=true;state='glide';
+  }else if(d.t==='hide'){orb.vis=false;state='idle'}
+}
+
+/* ---------- Input (sender) ---------- */
+let lastP=null;
+cv.addEventListener('pointerdown',e=>{
+  if(role!=='send'||state!=='play')return;
+  const d=Math.hypot(e.clientX-orb.x,e.clientY-orb.y);
+  if(d<orb.r*2){dragging=true;ptr.x=e.clientX;ptr.y=e.clientY;lastP={x:orb.x,y:orb.y};orb.vx=orb.vy=0;cv.setPointerCapture(e.pointerId)}
+});
+cv.addEventListener('pointermove',e=>{if(dragging){ptr.x=e.clientX;ptr.y=e.clientY}});
+const endDrag=()=>{
+  if(!dragging)return;dragging=false;
+  if(connected&&orb.x>W-orb.r*1.4)orb.vx=Math.max(orb.vx,9);
+};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+
+/* ---------- Drawing ---------- */
+function drawOrb(x,y,r,t,k=1){
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  let g=ctx.createRadialGradient(x,y,r*.1,x,y,r*2.4);
+  g.addColorStop(0,'rgba(0,243,255,'+.55*k+')');g.addColorStop(.45,'rgba(188,19,254,'+.28*k+')');g.addColorStop(1,'rgba(188,19,254,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*2.4,0,7);ctx.fill();
+  g=ctx.createRadialGradient(x-r*.25,y-r*.3,r*.05,x,y,r);
+  g.addColorStop(0,'#fff');g.addColorStop(.35,'#7ffaff');g.addColorStop(.75,'#00f3ff');g.addColorStop(1,'#bc13fe');
+  ctx.fillStyle=g;ctx.shadowColor='#00f3ff';ctx.shadowBlur=30;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+  ctx.shadowBlur=0;ctx.lineWidth=2.5;
+  ctx.strokeStyle='rgba(16,185,129,.95)';ctx.setLineDash([r*.35,r*.2]);ctx.lineDashOffset=-t*40;
+  ctx.beginPath();ctx.arc(x,y,r*1.25,0,7);ctx.stroke();
+  ctx.strokeStyle='rgba(188,19,254,.9)';ctx.setLineDash([r*.15,r*.3]);ctx.lineDashOffset=t*60;
+  ctx.beginPath();ctx.arc(x,y,r*1.5,0,7);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
+}
+function drawTrail(){
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const p of trail){
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,'rgba(0,243,255,'+p.a*.5+')');g.addColorStop(1,'rgba(188,19,254,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();p.a-=.045;p.r*=.97;
+  }
+  trail=trail.filter(p=>p.a>0);ctx.restore();
+}
+function pushTrail(){if(orb.vis)trail.push({x:orb.x,y:orb.y,r:orb.r*1.1,a:1})}
+
+/* ---------- Explosion ---------- */
+function explode(){
+  state='boom';orb.vis=false;
+  const cx=orb.x,cy=orb.y;
+  for(let i=0;i<420;i++){
+    const a=Math.random()*Math.PI*2,s=Math.pow(Math.random(),.5)*Math.max(W,H)*.022+1;
+    particles.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:70+Math.random()*80,max:150,size:1.2+Math.random()*3.2,c:COLORS[i%3]});
+  }
+  rings.push({x:cx,y:cy,r:orb.r,a:1,c:'#00f3ff'},{x:cx,y:cy,r:orb.r*.5,a:1,c:'#bc13fe'});
+  const f=$('flash');f.style.transition='none';f.style.opacity='.95';
+  requestAnimationFrame(()=>{f.style.transition='opacity .9s ease-out';f.style.opacity='0'});
+  if(navigator.vibrate)navigator.vibrate([220,60,120,60,320]);
+  setTimeout(showCard,650);
+}
+function showCard(){
+  state='card';const el=$('msg'),txt=Array.from(secretMsg||'أنتما الآن شاشة واحدة ✨');
+  el.textContent='';el.classList.remove('done');$('card').classList.add('on');
+  let i=0;const iv=setInterval(()=>{el.textContent=txt.slice(0,++i).join('');if(i>=txt.length){clearInterval(iv);el.classList.add('done')}},65);
+}
+$('bAgain').onclick=()=>{
+  $('card').classList.remove('on');particles=[];rings=[];trail=[];orb.vis=false;state='idle';
+  send({t:'reset'});hud('تم الربط ✓ انتظر وصول الكرة من الهاتف الأول',true);
+};
+
+/* ---------- Main loop ---------- */
+let t0=performance.now();
+function loop(now){
+  const t=(now-t0)/1000;
+  ctx.clearRect(0,0,W,H);
+  if(role==='send')stepSender(t);else stepReceiver(t,now);
+  drawTrail();
+  if(orb.vis){const bob=(state==='play'&&!dragging)?Math.sin(t*2)*3:0;drawOrb(orb.x,orb.y+bob,orb.r*(state==='gather'?gatherScale():1),t,1)}
+  drawFX();
+  requestAnimationFrame(loop);
+}
+function stepSender(t){
+  if(state!=='play')return;
+  const r=orb.r;
+  if(dragging){
+    const nx=orb.x+(Math.min(ptr.x,W)-orb.x)*.35,ny=orb.y+(ptr.y-orb.y)*.35;
+    orb.vx=orb.vx*.6+(nx-orb.x)*.4;orb.vy=orb.vy*.6+(ny-orb.y)*.4;
+    orb.x=nx;orb.y=Math.max(r,Math.min(H-r,ny));
+  }else{
+    orb.x+=orb.vx;orb.y+=orb.vy;orb.vx*=.985;orb.vy*=.985;
+    if(connected&&orb.x>W-r*.9&&orb.vx<7)orb.vx=7;   // push across the edge
+    if(orb.x<r){orb.x=r;orb.vx=Math.abs(orb.vx)*.7}
+    if(!connected&&orb.x>W-r){orb.x=W-r;orb.vx=-Math.abs(orb.vx)*.7}
+    if(orb.y<r){orb.y=r;orb.vy=Math.abs(orb.vy)*.7}
+    if(orb.y>H-r){orb.y=H-r;orb.vy=-Math.abs(orb.vy)*.7}
+  }
+  pushTrail();
+  if(connected){
+    if(orb.x-r>W){ // fully out: hand over to the second phone
+      send({t:'own',xo:orb.x-W,yr:orb.y/H,r,vx:orb.vx,vy:orb.vy,msg:secretMsg});
+      state='gone';orb.vis=false;dragging=false;if(navigator.vibrate)navigator.vibrate(40);
+      hud('عبرت الكرة إلى الهاتف الثاني ✨',true);
+    }else if(orb.x+r>W){
+      send({t:'orb',xo:orb.x-W,yr:orb.y/H,r,vx:orb.vx,vy:orb.vy,msg:secretMsg});sentVisible=true;
+    }else if(sentVisible){send({t:'hide'});sentVisible=false}
+  }
+}
+function stepReceiver(t,now){
+  const cx=W/2,cy=H/2;
+  if(state==='incoming'&&now-lastPkt>350){orb.vis=false;state='idle'}
+  if(state==='incoming')pushTrail();
+  if(state==='glide'){
+    orb.x+=(cx-orb.x)*.05+orb.vx*.5;orb.y+=(cy-orb.y)*.05+orb.vy*.5;orb.vx*=.94;orb.vy*=.94;pushTrail();
+    if(Math.abs(cx-orb.x)<4&&Math.abs(cy-orb.y)<4){orb.x=cx;orb.y=cy;state='gather';gatherT=performance.now();gather=[]}
+  }
+  if(state==='gather'){
+    const p=(now-gatherT)/650;
+    if(Math.random()<.9)for(let i=0;i<3;i++){const a=Math.random()*7,d=orb.r*(3.2+Math.random()*2);gather.push({a,d,c:COLORS[(Math.random()*3)|0]})}
+    if(p>=1){gather=[];explode()}
+  }
+}
+function gatherScale(){const p=Math.min(1,(performance.now()-gatherT)/650);return 1-.35*p+Math.sin(p*40)*.04}
+function drawFX(){
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  if(state==='gather'){
+    const p=Math.min(1,(performance.now()-gatherT)/650);
+    for(const g of gather){const d=g.d*(1-p*.9);ctx.fillStyle=g.c;ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(orb.x+Math.cos(g.a)*d,orb.y+Math.sin(g.a)*d,2.2,0,7);ctx.fill()}
+    gather.length>260&&gather.splice(0,60);
+  }
+  ctx.globalAlpha=1;
+  for(const r of rings){ctx.strokeStyle=r.c;ctx.globalAlpha=r.a;ctx.lineWidth=4*r.a+1;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,7);ctx.stroke();r.r+=Math.max(W,H)*.02;r.a-=.018}
+  rings=rings.filter(r=>r.a>0);
+  for(const p of particles){
+    p.x+=p.vx;p.y+=p.vy;p.vx*=.985;p.vy=p.vy*.985+.03;p.life--;
+    ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,7);ctx.fill();
+  }
+  particles=particles.filter(p=>p.life>0);
+  ctx.restore();
+}
+})();
+</script>
+</body>
+</html>
