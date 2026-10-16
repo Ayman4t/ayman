@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#05050a">
-<title>Quantum Orb - القنبلة الضوئية العابرة للشاشات</title>
+<title>Quantum Pong - بينغ بونغ عبر شاشتين</title>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#05050a;--cyan:#00f3ff;--violet:#bc13fe;--green:#10b981;--text:#e8f6ff;--muted:#8a94b8}
@@ -53,10 +53,10 @@ input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;borde
 
 <section class="screen on" id="sRole">
   <div class="box">
-    <h1>Quantum Orb</h1>
-    <p class="sub">القنبلة الضوئية العابرة للشاشات<br>اجمع هاتفين جنباً إلى جنب وحوّلهما إلى شاشة واحدة ممتدة</p>
-    <button class="btn" id="bSend">الهاتف الأول (اليسار - المرسل)<small>تنشئ الغرفة وتحرك الكرة</small></button>
-    <button class="btn v" id="bRecv">الهاتف الثاني (اليمين - المستلم)<small>تدخل كود الغرفة وتستقبل الكرة</small></button>
+    <h1>Quantum Pong</h1>
+    <p class="sub">بينغ بونغ عبر شاشتين<br>ضع الهاتفين جنباً إلى جنب (بالطول) لتصبح الطاولة شاشة واحدة، والكرة تعبر بينهما</p>
+    <button class="btn" id="bSend">الهاتف الأول (اليسار - المضيف)<small>تنشئ الغرفة وتتحكم بالمضرب الأيسر</small></button>
+    <button class="btn v" id="bRecv">الهاتف الثاني (اليمين)<small>تدخل كود الغرفة وتتحكم بالمضرب الأيمن</small></button>
   </div>
 </section>
 
@@ -65,9 +65,8 @@ input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;borde
     <div class="label">كود الغرفة</div>
     <div class="code" id="code">····</div>
     <p class="sub" style="margin:6px 0 4px">أدخل هذا الكود في الهاتف الثاني</p>
-    <input id="secret" maxlength="120" placeholder="الرسالة السرية (اختياري)" value="أنتما الآن شاشة واحدة ✨">
     <div class="status"><i class="dot wait" id="sdot"></i><span id="sst">جارٍ إنشاء الغرفة…</span></div>
-    <button class="btn g" id="bStart" disabled>ابدأ</button>
+    <button class="btn g" id="bStart" disabled>ابدأ المباراة</button>
   </div>
 </section>
 
@@ -82,9 +81,9 @@ input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;borde
 </section>
 
 <div id="card">
-  <div class="t">الرسالة السرية</div>
-  <div id="msg"></div>
-  <button class="btn v" id="bAgain">أعد الكرة</button>
+  <div class="t">نتيجة المباراة</div>
+  <div id="msg" class="done"></div>
+  <button class="btn v" id="bAgain">العب مرة أخرى</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
@@ -92,16 +91,11 @@ input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;borde
 (()=>{
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
-const COLORS=['#00f3ff','#bc13fe','#10b981'];
 let W=0,H=0,dpr=1;
-function resize(){dpr=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
-addEventListener('resize',resize);resize();
 
-let role=null,peer=null,conn=null,connected=false,secretMsg='';
-const PREFIX='quantum-orb-';
-/* ---- Internet-wide connectivity (STUN + TURN relay) ---- */
-const METERED_APP='',METERED_KEY='';   // optional: free account at metered.ca -> more reliable TURN
-let ICE=[
+let role=null,peer=null,conn=null,connected=false,started=false;
+const PREFIX='quantum-pong-';
+const ICE=[
  {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.relay.metered.ca:80'},
  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
@@ -109,212 +103,248 @@ let ICE=[
  {urls:'turns:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
 ];
 const PEER_OPTS=()=>({debug:0,config:{iceServers:ICE,iceCandidatePoolSize:4}});
-if(METERED_APP&&METERED_KEY)fetch('https://'+METERED_APP+'.metered.live/api/v1/turn/credentials?apiKey='+METERED_KEY).then(r=>r.json()).then(j=>{if(Array.isArray(j)&&j.length)ICE=j.concat(ICE)}).catch(()=>{});
 
-const R=()=>Math.max(38,Math.min(70,Math.min(W,H)*.11));
+/* ---------- Game constants (world: height = 1, width = aL + aR) ---------- */
+const BR=.032, PH=.22, PT=.03, PX=.045, BASE=.75, MAXS=2.1, WIN=7;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
-/* ---------- Orb state ---------- */
-const orb={x:0,y:0,vx:0,vy:0,r:50,vis:false};
-let trail=[],particles=[],rings=[],gather=[];
-let state='idle'; // sender: play|gone ; receiver: idle|incoming|glide|gather|boom|card
-let dragging=false,ptr={x:0,y:0},sentVisible=false,lastPkt=0,gatherT=0;
+/* ---------- State ---------- */
+let aR=.5;                       // host: right phone aspect (W/H), reported by guest
+let myY=.5, myPad=.5, remoteY=.5, lastSentY=-1, lastSentT=0;
+const G={bx:.5,by:.5,vx:0,vy:0,ly:.5,ry:.5,sl:0,sr:0,st:'wait',cd:0,serveAt:0,dir:1,speed:BASE,winner:''};
+let pk=null,pkT=0;               // guest: last packet
+let evq=[],trail=[],flashes=[];
+
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(role==='recv')send({t:'dim',a:W/H})}
+addEventListener('resize',resize);resize();
+
+/* ---------- Audio / haptics ---------- */
+let ac=null;
+function unlock(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}}
+function beep(f,d=.08,type='sine',v=.15){if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function vib(p){if(navigator.vibrate)navigator.vibrate(p)}
+function ballLocalX(){return role==='send'?G.bx:G.bx-(pk?pk.aL:.5)}
+function playEv(e){
+  if(e==='hl'){if(role==='send'){beep(520);vib(25);flashAt(PX,G.by)}}
+  else if(e==='hr'){if(role==='recv'){beep(640);vib(25)}}
+  else if(e==='w'){const x=ballLocalX();if(x>-.05&&x<W/H+.05)beep(300,.05,'triangle')}
+  else if(e==='pt'){beep(170,.35,'sawtooth',.12);vib([60,40,60]);doFlash()}
+  else if(e==='win'){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.2,'sine',.18),i*130));vib([100,50,100,50,300])}
+}
+function flashAt(){}
+function doFlash(){const f=$('flash');f.style.transition='none';f.style.opacity='.35';requestAnimationFrame(()=>{f.style.transition='opacity .5s ease-out';f.style.opacity='0'})}
 
 /* ---------- UI helpers ---------- */
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id))}
 function hud(txt,ok){$('hud').style.display='flex';$('htxt').textContent=txt;$('hdot').className='dot '+(ok?'ok':'wait')}
 function send(o){if(conn&&conn.open)try{conn.send(o)}catch(e){}}
+const HINT='حرّك إصبعك لأعلى وأسفل لتحريك المضرب · أول من يصل إلى '+WIN;
 
-/* ---------- Roles ---------- */
-$('bSend').onclick=()=>{role='send';show('sSend');startSender()};
-$('bRecv').onclick=()=>{role='recv';show('sRecv');$('room').focus()};
+/* ---------- Roles / connection ---------- */
+$('bSend').onclick=()=>{unlock();role='send';show('sSend');startHost()};
+$('bRecv').onclick=()=>{unlock();role='recv';show('sRecv');$('room').focus()};
 
-function startSender(attempt=0){
+function startHost(attempt=0){
   const code=String(Math.floor(1000+Math.random()*9000));
   $('code').textContent=code;
   if(typeof Peer==='undefined'){$('sst').textContent='تعذّر تحميل PeerJS، تحقق من الإنترنت';return}
   peer=new Peer(PREFIX+code,PEER_OPTS());
   peer.on('open',()=>{$('sst').textContent='بانتظار الهاتف الثاني…'});
   peer.on('error',e=>{
-    if(e.type==='unavailable-id'&&attempt<6){peer.destroy();startSender(attempt+1)}
+    if(e.type==='unavailable-id'&&attempt<6){peer.destroy();startHost(attempt+1)}
     else $('sst').textContent='خطأ في الاتصال: '+e.type;
   });
   peer.on('connection',c=>{
     if(conn&&conn.open){c.close();return}
     conn=c;
     c.on('open',()=>{connected=true;$('sdot').className='dot ok';$('sst').textContent='تم الربط بنجاح ✓';$('bStart').disabled=false;
-      secretMsg=$('secret').value.trim();send({t:'hello'})});
-    c.on('data',d=>{if(d.t==='reset')respawn()});
-    c.on('close',()=>{connected=false;$('sdot').className='dot wait';$('sst').textContent='انقطع الاتصال، بانتظار الهاتف الثاني…';$('bStart').disabled=true;hud('انقطع الاتصال',false)});
+      if(started){newServe();hud(HINT,true)}});
+    c.on('data',d=>{
+      if(d.t==='dim'&&d.a>0)aR=clamp(d.a,.25,1.2);
+      else if(d.t==='p')remoteY=clamp(d.y,0,1);
+      else if(d.t==='rematch'&&G.st==='over')restart();
+    });
+    c.on('close',()=>{connected=false;$('sdot').className='dot wait';$('sst').textContent='انقطع الاتصال، بانتظار الهاتف الثاني…';
+      $('bStart').disabled=!started;if(started){G.st='wait';hud('انقطع الاتصال… بانتظار الهاتف الثاني',false)}});
   });
 }
-$('bStart').onclick=()=>{secretMsg=$('secret').value.trim()||'أنتما الآن شاشة واحدة ✨';show('');respawn();hud('اسحب الكرة نحو الحافة اليمنى وأفلتها',true);requestAnimationFrame(loop)};
+$('bStart').onclick=()=>{unlock();show('');started=true;restart();hud(HINT,true);beginLoop()};
 
-function respawn(){orb.r=R();orb.x=W*.3;orb.y=H*.5;orb.vx=orb.vy=0;orb.vis=true;state='play';trail=[];sentVisible=false;
-  if(connected)hud('اسحب الكرة نحو الحافة اليمنى وأفلتها',true)}
-
-$('bConn').onclick=connectReceiver;
-$('room').addEventListener('keydown',e=>{if(e.key==='Enter')connectReceiver()});
-function connectReceiver(){
+$('bConn').onclick=()=>{unlock();connectGuest()};
+$('room').addEventListener('keydown',e=>{if(e.key==='Enter'){unlock();connectGuest()}});
+function connectGuest(){
   const code=$('room').value.trim();
   if(!/^\d{4}$/.test(code)){$('rst').textContent='الكود يجب أن يكون 4 أرقام';return}
   if(typeof Peer==='undefined'){$('rst').textContent='تعذّر تحميل PeerJS، تحقق من الإنترنت';return}
-  $('rdot').className='dot wait';$('rst').textContent='جارٍ الاتصال…';$('bConn').disabled=true;setTimeout(()=>{if(!connected){$('rst').textContent='تعذّر الاتصال. تحقق من الكود وجرّب مرة أخرى، وأوقف الـ VPN إن وُجد';$('rdot').className='dot';$('bConn').disabled=false}},25000);
+  $('rdot').className='dot wait';$('rst').textContent='جارٍ الاتصال…';$('bConn').disabled=true;
+  setTimeout(()=>{if(!connected){$('rst').textContent='تعذّر الاتصال. تحقق من الكود وجرّب مرة أخرى، وأوقف الـ VPN إن وُجد';$('rdot').className='dot';$('bConn').disabled=false}},25000);
   if(peer)peer.destroy();
   peer=new Peer(undefined,PEER_OPTS());
   peer.on('open',()=>{
     conn=peer.connect(PREFIX+code,{reliable:true});
-    conn.on('open',()=>{connected=true;$('rdot').className='dot ok';show('');state='idle';hud('تم الربط ✓ انتظر وصول الكرة من الهاتف الأول',true);requestAnimationFrame(loop)});
-    conn.on('data',onRecv);
+    conn.on('open',()=>{connected=true;$('rdot').className='dot ok';show('');hud('تم الربط ✓ بانتظار أن يبدأ الهاتف الأول',true);send({t:'dim',a:W/H});beginLoop()});
+    conn.on('data',onGuestData);
     conn.on('close',()=>{connected=false;hud('انقطع الاتصال',false)});
   });
   peer.on('error',e=>{$('bConn').disabled=false;$('rdot').className='dot';$('rst').textContent=e.type==='peer-unavailable'?'الكود غير صحيح أو الغرفة غير موجودة':'خطأ في الاتصال: '+e.type});
 }
 
-/* ---------- Receiver messages ---------- */
-function onRecv(d){
-  if(d.msg)secretMsg=d.msg;
-  if(state==='gather'||state==='boom'||state==='card')return;
-  if(d.t==='orb'){
-    orb.r=d.r;orb.x=d.xo;orb.y=d.yr*H;orb.vx=d.vx;orb.vy=d.vy;orb.vis=true;state='incoming';lastPkt=performance.now();
-  }else if(d.t==='own'){
-    orb.r=d.r;orb.x=d.xo;orb.y=d.yr*H;orb.vx=Math.max(d.vx,3);orb.vy=d.vy*.3;orb.vis=true;state='glide';
-  }else if(d.t==='hide'){orb.vis=false;state='idle'}
+/* ---------- Guest: receive host state ---------- */
+let lastSt='wait';
+function onGuestData(d){
+  if(d.t!=='s')return;
+  pk=d;pkT=performance.now();
+  G.sl=d.sl;G.sr=d.sr;G.st=d.st;G.cd=d.cd;G.winner=d.w;
+  if(d.ev)d.ev.forEach(playEv);
+  if(d.st!==lastSt){
+    if(d.st==='over')showResult();else hideResult();
+    if(d.st==='serve'||d.st==='play')hud(HINT,true);
+    if(d.st==='wait')hud('الهاتف الأول متوقف مؤقتاً',false);
+    lastSt=d.st;
+  }
 }
 
-/* ---------- Input (sender) ---------- */
-let lastP=null;
-cv.addEventListener('pointerdown',e=>{
-  if(role!=='send'||state!=='play')return;
-  const d=Math.hypot(e.clientX-orb.x,e.clientY-orb.y);
-  if(d<orb.r*2){dragging=true;ptr.x=e.clientX;ptr.y=e.clientY;lastP={x:orb.x,y:orb.y};orb.vx=orb.vy=0;cv.setPointerCapture(e.pointerId)}
-});
-cv.addEventListener('pointermove',e=>{if(dragging){ptr.x=e.clientX;ptr.y=e.clientY}});
-const endDrag=()=>{
-  if(!dragging)return;dragging=false;
-  if(connected&&orb.x>W-orb.r*1.4)orb.vx=Math.max(orb.vx,9);
-};
-cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+/* ---------- Input ---------- */
+function setY(e){myY=clamp(e.clientY/H,0,1)}
+cv.addEventListener('pointerdown',e=>{unlock();setY(e);cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',setY);
+
+/* ---------- Host game logic ---------- */
+function newServe(){G.bx=(W/H+aR)/2;G.by=.5;G.vx=G.vy=0;G.st='serve';G.serveAt=performance.now()+2000;G.speed=BASE;trail=[]}
+function restart(){G.sl=G.sr=0;G.winner='';G.dir=Math.random()<.5?1:-1;hideResult();newServe()}
+function launch(){const a=(Math.random()-.5)*.8;G.vx=G.dir*G.speed*Math.cos(a);G.vy=G.speed*Math.sin(a);G.st='play'}
+function bounce(dir,py){
+  const rel=clamp((G.by-py)/(PH/2),-1,1);
+  G.speed=Math.min(MAXS,G.speed*1.05);
+  const a=rel*1.0;
+  G.vx=dir*G.speed*Math.cos(a);G.vy=G.speed*Math.sin(a);
+}
+function point(who){
+  evq.push('pt');
+  if(who==='L')G.sl++;else G.sr++;
+  if(G.sl>=WIN||G.sr>=WIN){
+    G.st='over';G.winner=G.sl>G.sr?'L':'R';G.vx=G.vy=0;evq.push('win');showResult();
+  }else{G.dir=who==='L'?1:-1;newServe()}
+}
+function hostStep(dt){
+  const aL=W/H,WW=aL+aR;
+  const k=1-Math.exp(-dt*25);
+  G.ly+=(myY-G.ly)*k;G.ry+=(remoteY-G.ry)*k;
+  const now=performance.now();
+  if(connected){
+    if(G.st==='serve'){
+      G.cd=Math.max(1,Math.ceil((G.serveAt-now)/650));G.bx=WW/2;G.by=.5;
+      if(now>=G.serveAt)launch();
+    }else if(G.st==='play'){
+      const n=Math.max(1,Math.ceil(dt/.006)),h=dt/n;
+      for(let i=0;i<n;i++){
+        G.bx+=G.vx*h;G.by+=G.vy*h;
+        if(G.by<BR){G.by=BR;G.vy=Math.abs(G.vy);evq.push('w')}
+        else if(G.by>1-BR){G.by=1-BR;G.vy=-Math.abs(G.vy);evq.push('w')}
+        if(G.vx<0){
+          const face=PX+PT/2;
+          if(G.bx-BR<=face&&G.bx>PX-PT&&Math.abs(G.by-G.ly)<=PH/2+BR*.6){bounce(1,G.ly);G.bx=face+BR;evq.push('hl')}
+        }else{
+          const face=WW-PX-PT/2;
+          if(G.bx+BR>=face&&G.bx<WW-PX+PT&&Math.abs(G.by-G.ry)<=PH/2+BR*.6){bounce(-1,G.ry);G.bx=face-BR;evq.push('hr')}
+        }
+        if(G.bx<-BR*2){point('R');break}
+        if(G.bx>WW+BR*2){point('L');break}
+      }
+    }
+  }
+  const r4=v=>Math.round(v*10000)/10000;
+  send({t:'s',bx:r4(G.bx),by:r4(G.by),vx:r4(G.vx),vy:r4(G.vy),sl:G.sl,sr:G.sr,st:connected?G.st:'wait',cd:G.cd,w:G.winner,aL:r4(aL),ev:evq.length?evq:undefined});
+  evq.forEach(playEv);evq=[];
+}
+
+/* ---------- Guest step ---------- */
+function guestStep(dt){
+  const k=1-Math.exp(-dt*25);myPad+=(myY-myPad)*k;
+  const n=performance.now();
+  if(Math.abs(myPad-lastSentY)>.002&&n-lastSentT>16||n-lastSentT>200){send({t:'p',y:myPad});lastSentY=myPad;lastSentT=n}
+  if(pk){
+    const el=Math.min(.12,(n-pkT)/1000);
+    G.bx=pk.bx+pk.vx*el;
+    let y=pk.by+pk.vy*el;
+    if(y<BR)y=2*BR-y;else if(y>1-BR)y=2*(1-BR)-y;
+    G.by=clamp(y,BR,1-BR);
+  }
+}
+
+/* ---------- Result card ---------- */
+let cardOn=false;
+function showResult(){
+  if(cardOn)return;cardOn=true;
+  const iWon=(G.winner==='L'&&role==='send')||(G.winner==='R'&&role==='recv');
+  $('msg').textContent=(iWon?'🏆 فزت بالمباراة!':'خسرت هذه المرة 💫')+'\n'+G.sl+' : '+G.sr;
+  $('msg').style.whiteSpace='pre-line';
+  $('card').classList.add('on');
+}
+function hideResult(){cardOn=false;$('card').classList.remove('on')}
+$('bAgain').onclick=()=>{if(role==='send')restart();else send({t:'rematch'})};
+// host: result text should reflect winner computed in point()
+const _show=showResult;
 
 /* ---------- Drawing ---------- */
-function drawOrb(x,y,r,t,k=1){
+function drawBall(x,y,r,t){
   ctx.save();ctx.globalCompositeOperation='lighter';
-  let g=ctx.createRadialGradient(x,y,r*.1,x,y,r*2.4);
-  g.addColorStop(0,'rgba(0,243,255,'+.55*k+')');g.addColorStop(.45,'rgba(188,19,254,'+.28*k+')');g.addColorStop(1,'rgba(188,19,254,0)');
-  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*2.4,0,7);ctx.fill();
+  let g=ctx.createRadialGradient(x,y,r*.1,x,y,r*2.6);
+  g.addColorStop(0,'rgba(0,243,255,.55)');g.addColorStop(.45,'rgba(188,19,254,.28)');g.addColorStop(1,'rgba(188,19,254,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*2.6,0,7);ctx.fill();
   g=ctx.createRadialGradient(x-r*.25,y-r*.3,r*.05,x,y,r);
   g.addColorStop(0,'#fff');g.addColorStop(.35,'#7ffaff');g.addColorStop(.75,'#00f3ff');g.addColorStop(1,'#bc13fe');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
-  ctx.lineWidth=2.5;
-  ctx.strokeStyle='rgba(16,185,129,.95)';ctx.setLineDash([r*.35,r*.2]);ctx.lineDashOffset=-t*40;
-  ctx.beginPath();ctx.arc(x,y,r*1.25,0,7);ctx.stroke();
-  ctx.strokeStyle='rgba(188,19,254,.9)';ctx.setLineDash([r*.15,r*.3]);ctx.lineDashOffset=t*60;
-  ctx.beginPath();ctx.arc(x,y,r*1.5,0,7);ctx.stroke();
-  ctx.setLineDash([]);ctx.restore();
+  ctx.lineWidth=2;ctx.strokeStyle='rgba(16,185,129,.9)';ctx.setLineDash([r*.4,r*.25]);ctx.lineDashOffset=-t*40;
+  ctx.beginPath();ctx.arc(x,y,r*1.35,0,7);ctx.stroke();ctx.setLineDash([]);ctx.restore();
 }
-function drawTrail(){
+function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function draw(t){
+  const S=H,isL=role==='send';
+  ctx.clearRect(0,0,W,H);
+  const col=isL?'#00f3ff':'#bc13fe';
+  // table borders
+  ctx.save();ctx.shadowColor=col;ctx.shadowBlur=14;ctx.strokeStyle=col;ctx.globalAlpha=.7;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(0,1.5);ctx.lineTo(W,1.5);ctx.moveTo(0,H-1.5);ctx.lineTo(W,H-1.5);ctx.stroke();
+  // seam / net
+  ctx.setLineDash([14,12]);ctx.lineDashOffset=-t*20;ctx.strokeStyle='#10b981';ctx.shadowColor='#10b981';
+  const nx=isL?W-2:2;ctx.beginPath();ctx.moveTo(nx,0);ctx.lineTo(nx,H);ctx.stroke();ctx.restore();
+  // scores near the seam
+  ctx.save();ctx.font='800 '+Math.round(S*.14)+'px Rubik,sans-serif';ctx.textBaseline='top';ctx.globalAlpha=.55;ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=18;
+  if(isL){ctx.textAlign='right';ctx.fillText(String(G.sl),W-S*.06,S*.1)}else{ctx.textAlign='left';ctx.fillText(String(G.sr),S*.06,S*.1)}
+  ctx.restore();
+  // paddle (own side only)
+  const py=(isL?G.ly:myPad)*S,ph=PH*S,pt=PT*S;
+  const pcx=isL?PX*S:W-PX*S;
+  ctx.save();ctx.shadowColor=col;ctx.shadowBlur=22;ctx.fillStyle=col;rrect(pcx-pt/2,py-ph/2,pt,ph,pt/2);ctx.fill();ctx.restore();
+  // ball
+  const started2=(role==='send')?started&&connected:!!pk;
+  if(started2&&G.st!=='over'){
+    const lx=(isL?G.bx:G.bx-(pk?pk.aL:.5))*S,lyy=G.by*S,r=BR*S;
+    if(G.st==='play')trail.push({x:lx,y:lyy,r:r*1.1,a:1});
+    drawBall(lx,lyy,r,t);
+  }
+  // trail
   ctx.save();ctx.globalCompositeOperation='lighter';
-  for(const p of trail){
-    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
-    g.addColorStop(0,'rgba(0,243,255,'+p.a*.5+')');g.addColorStop(1,'rgba(188,19,254,0)');
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();p.a-=.07;p.r*=.97;
-  }
+  for(const p of trail){const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);g.addColorStop(0,'rgba(0,243,255,'+p.a*.45+')');g.addColorStop(1,'rgba(188,19,254,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();p.a-=.08;p.r*=.97}
   trail=trail.filter(p=>p.a>0);ctx.restore();
-}
-function pushTrail(){if(orb.vis)trail.push({x:orb.x,y:orb.y,r:orb.r*1.1,a:1})}
-
-/* ---------- Explosion ---------- */
-function explode(){
-  state='boom';orb.vis=false;
-  const cx=orb.x,cy=orb.y;
-  for(let i=0;i<260;i++){
-    const a=Math.random()*Math.PI*2,s=Math.pow(Math.random(),.5)*Math.max(W,H)*.022+1;
-    particles.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:70+Math.random()*80,max:150,size:1.2+Math.random()*3.2,c:COLORS[i%3]});
+  // countdown
+  if(G.st==='serve'&&started2){
+    ctx.save();ctx.font='800 '+Math.round(S*.2)+'px Rubik,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#e8f6ff';ctx.globalAlpha=.8;ctx.shadowColor='#00f3ff';ctx.shadowBlur=30;
+    ctx.fillText(String(G.cd||''),W/2,H*.3);ctx.restore();
   }
-  rings.push({x:cx,y:cy,r:orb.r,a:1,c:'#00f3ff'},{x:cx,y:cy,r:orb.r*.5,a:1,c:'#bc13fe'});
-  const f=$('flash');f.style.transition='none';f.style.opacity='.95';
-  requestAnimationFrame(()=>{f.style.transition='opacity .9s ease-out';f.style.opacity='0'});
-  if(navigator.vibrate)navigator.vibrate([220,60,120,60,320]);
-  setTimeout(showCard,650);
 }
-function showCard(){
-  state='card';const el=$('msg'),txt=Array.from(secretMsg||'أنتما الآن شاشة واحدة ✨');
-  el.textContent='';el.classList.remove('done');$('card').classList.add('on');
-  let i=0;const iv=setInterval(()=>{el.textContent=txt.slice(0,++i).join('');if(i>=txt.length){clearInterval(iv);el.classList.add('done')}},65);
-}
-$('bAgain').onclick=()=>{
-  $('card').classList.remove('on');particles=[];rings=[];trail=[];orb.vis=false;state='idle';
-  send({t:'reset'});hud('تم الربط ✓ انتظر وصول الكرة من الهاتف الأول',true);
-};
 
 /* ---------- Main loop ---------- */
-let t0=performance.now();
+let looping=false,last=performance.now();
+function beginLoop(){if(looping)return;looping=true;last=performance.now();requestAnimationFrame(loop)}
 function loop(now){
-  const t=(now-t0)/1000;
-  ctx.clearRect(0,0,W,H);
-  if(role==='send')stepSender(t);else stepReceiver(t,now);
-  drawTrail();
-  if(orb.vis){const bob=(state==='play'&&!dragging)?Math.sin(t*2)*3:0;drawOrb(orb.x,orb.y+bob,orb.r*(state==='gather'?gatherScale():1),t,1)}
-  drawFX();
+  const dt=Math.min(.033,Math.max(.001,(now-last)/1000));last=now;
+  if(role==='send')hostStep(dt);else guestStep(dt);
+  draw(now/1000);
   requestAnimationFrame(loop);
-}
-function stepSender(t){
-  if(state!=='play')return;
-  const r=orb.r;
-  if(dragging){
-    const nx=orb.x+(Math.min(ptr.x,W)-orb.x)*.35,ny=orb.y+(ptr.y-orb.y)*.35;
-    orb.vx=orb.vx*.6+(nx-orb.x)*.4;orb.vy=orb.vy*.6+(ny-orb.y)*.4;
-    orb.x=nx;orb.y=Math.max(r,Math.min(H-r,ny));
-  }else{
-    orb.x+=orb.vx;orb.y+=orb.vy;orb.vx*=.985;orb.vy*=.985;
-    if(connected&&orb.x>W-r*.9&&orb.vx<7)orb.vx=7;   // push across the edge
-    if(orb.x<r){orb.x=r;orb.vx=Math.abs(orb.vx)*.7}
-    if(!connected&&orb.x>W-r){orb.x=W-r;orb.vx=-Math.abs(orb.vx)*.7}
-    if(orb.y<r){orb.y=r;orb.vy=Math.abs(orb.vy)*.7}
-    if(orb.y>H-r){orb.y=H-r;orb.vy=-Math.abs(orb.vy)*.7}
-  }
-  pushTrail();
-  if(connected){
-    if(orb.x-r>W){ // fully out: hand over to the second phone
-      send({t:'own',xo:orb.x-W,yr:orb.y/H,r,vx:orb.vx,vy:orb.vy,msg:secretMsg});
-      state='gone';orb.vis=false;dragging=false;if(navigator.vibrate)navigator.vibrate(40);
-      hud('عبرت الكرة إلى الهاتف الثاني ✨',true);
-    }else if(orb.x+r>W){
-      const nt=performance.now();if(nt-(orb.gt||0)>=33){send({t:'orb',xo:orb.x-W,yr:orb.y/H,r,vx:orb.vx,vy:orb.vy});orb.gt=nt}sentVisible=true;
-    }else if(sentVisible){send({t:'hide'});sentVisible=false}
-  }
-}
-function stepReceiver(t,now){
-  const cx=W/2,cy=H/2;
-  if(state==='incoming'&&now-lastPkt>350){orb.vis=false;state='idle'}
-  if(state==='incoming')pushTrail();
-  if(state==='glide'){
-    orb.x+=(cx-orb.x)*.05+orb.vx*.5;orb.y+=(cy-orb.y)*.05+orb.vy*.5;orb.vx*=.94;orb.vy*=.94;pushTrail();
-    if(Math.abs(cx-orb.x)<4&&Math.abs(cy-orb.y)<4){orb.x=cx;orb.y=cy;state='gather';gatherT=performance.now();gather=[]}
-  }
-  if(state==='gather'){
-    const p=(now-gatherT)/650;
-    if(Math.random()<.9)for(let i=0;i<3;i++){const a=Math.random()*7,d=orb.r*(3.2+Math.random()*2);gather.push({a,d,c:COLORS[(Math.random()*3)|0]})}
-    if(p>=1){gather=[];explode()}
-  }
-}
-function gatherScale(){const p=Math.min(1,(performance.now()-gatherT)/650);return 1-.35*p+Math.sin(p*40)*.04}
-function drawFX(){
-  ctx.save();ctx.globalCompositeOperation='lighter';
-  if(state==='gather'){
-    const p=Math.min(1,(performance.now()-gatherT)/650);
-    for(const g of gather){const d=g.d*(1-p*.9);ctx.fillStyle=g.c;ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(orb.x+Math.cos(g.a)*d,orb.y+Math.sin(g.a)*d,2.2,0,7);ctx.fill()}
-    gather.length>260&&gather.splice(0,60);
-  }
-  ctx.globalAlpha=1;
-  for(const r of rings){ctx.strokeStyle=r.c;ctx.globalAlpha=r.a;ctx.lineWidth=4*r.a+1;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,7);ctx.stroke();r.r+=Math.max(W,H)*.02;r.a-=.018}
-  rings=rings.filter(r=>r.a>0);
-  for(const p of particles){
-    p.x+=p.vx;p.y+=p.vy;p.vx*=.985;p.vy=p.vy*.985+.03;p.life--;
-    ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.c;
-    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,7);ctx.fill();
-  }
-  particles=particles.filter(p=>p.life>0);
-  ctx.restore();
 }
 })();
 </script>
