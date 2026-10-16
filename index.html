@@ -3,45 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#05050a">
+<meta name="theme-color" content="#04101f">
 <title>Quantum Pong - بينغ بونغ عبر شاشتين</title>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#05050a;--cyan:#00f3ff;--violet:#bc13fe;--green:#10b981;--text:#e8f6ff;--muted:#8a94b8}
+:root{--bg:#04101f;--acc:#ff8a1f;--acc2:#4da3ff;--green:#10b981;--text:#f2f7ff;--muted:#93a4c6}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Rubik','Segoe UI',Tahoma,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-body{background-image:linear-gradient(rgba(0,243,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(0,243,255,.055) 1px,transparent 1px);background-size:40px 40px;background-position:center}
-body::after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(5,5,10,.85) 100%)}
+body{background:radial-gradient(ellipse at 50% 40%,#12407f 0%,#0a2a58 45%,#04101f 100%)}
+body::before{content:"";position:fixed;inset:12px;border:2px solid rgba(255,255,255,.16);border-radius:8px;pointer-events:none}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent calc(50% - 1px),rgba(255,255,255,.08) calc(50% - 1px),rgba(255,255,255,.08) calc(50% + 1px),transparent calc(50% + 1px))}
 canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;touch-action:none}
 #flash{position:fixed;inset:0;background:#fff;opacity:0;z-index:30;pointer-events:none}
-.screen{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));background:rgba(5,5,10,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.screen{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));background:rgba(4,16,36,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .screen.on{display:flex}
 .box{width:100%;max-width:380px;text-align:center}
-h1{font-size:clamp(30px,9vw,44px);font-weight:800;letter-spacing:.5px;background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(188,19,254,.45))}
+.logo{display:block;width:min(62vw,230px);height:auto;margin:0 auto 8px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+h1{font-size:clamp(30px,9vw,44px);font-weight:800;letter-spacing:.5px;background:linear-gradient(90deg,#fff,var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(255,138,31,.35))}
 .sub{color:var(--muted);margin:10px 0 28px;line-height:1.7;font-size:15px}
-.btn{display:block;width:100%;font:inherit;font-weight:700;font-size:17px;color:var(--text);background:rgba(10,14,34,.7);border:1.5px solid var(--cyan);border-radius:16px;padding:16px;margin-top:14px;cursor:pointer;box-shadow:0 0 18px rgba(0,243,255,.25),inset 0 0 14px rgba(0,243,255,.08);transition:transform .15s,box-shadow .15s}
+.btn{display:block;width:100%;font:inherit;font-weight:700;font-size:17px;color:var(--text);background:rgba(8,22,52,.75);border:1.5px solid var(--acc);border-radius:16px;padding:16px;margin-top:14px;cursor:pointer;box-shadow:0 0 18px rgba(255,138,31,.25),inset 0 0 14px rgba(255,138,31,.08);transition:transform .15s,box-shadow .15s}
 .btn:active{transform:scale(.97)}
 .btn small{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:4px}
-.btn.v{border-color:var(--violet);box-shadow:0 0 18px rgba(188,19,254,.3),inset 0 0 14px rgba(188,19,254,.1)}
+.btn.v{border-color:var(--acc2);box-shadow:0 0 18px rgba(77,163,255,.3),inset 0 0 14px rgba(77,163,255,.1)}
 .btn.g{border-color:var(--green);box-shadow:0 0 18px rgba(16,185,129,.3)}
 .btn:disabled{opacity:.35;cursor:not-allowed}
-.code{font-size:56px;font-weight:800;letter-spacing:14px;padding-inline-start:14px;color:var(--cyan);text-shadow:0 0 22px var(--cyan);direction:ltr;margin:6px 0 4px}
+.code{font-size:56px;font-weight:800;letter-spacing:14px;padding-inline-start:14px;color:var(--acc);text-shadow:0 0 22px rgba(255,138,31,.7);direction:ltr;margin:6px 0 4px}
 .label{color:var(--muted);font-size:14px}
-input{width:100%;font:inherit;color:var(--text);background:rgba(10,14,34,.8);border:1.5px solid rgba(188,19,254,.6);border-radius:14px;padding:14px;text-align:center;font-size:17px;outline:none;margin-top:10px;user-select:text;-webkit-user-select:text}
-input:focus{border-color:var(--violet);box-shadow:0 0 16px rgba(188,19,254,.45)}
-input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;border-color:rgba(0,243,255,.6)}
+input{width:100%;font:inherit;color:var(--text);background:rgba(8,22,52,.85);border:1.5px solid rgba(77,163,255,.6);border-radius:14px;padding:14px;text-align:center;font-size:17px;outline:none;margin-top:10px;user-select:text;-webkit-user-select:text}
+input:focus{border-color:var(--acc2);box-shadow:0 0 16px rgba(77,163,255,.45)}
+input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;border-color:rgba(255,138,31,.6)}
 .status{margin-top:16px;font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center;justify-content:center}
 .dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}
 .dot.ok{background:var(--green);box-shadow:0 0 10px var(--green)}
-.dot.wait{background:var(--violet);box-shadow:0 0 10px var(--violet);animation:pulse 1s infinite}
+.dot.wait{background:var(--acc);box-shadow:0 0 10px var(--acc);animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.3}}
-#hud{position:fixed;top:max(12px,env(safe-area-inset-top));left:0;right:0;z-index:10;display:none;justify-content:center;pointer-events:none;font-size:14px;color:var(--muted);text-align:center;padding:0 16px}
-#hud span{background:rgba(10,14,34,.6);border:1px solid rgba(0,243,255,.25);border-radius:999px;padding:8px 16px;display:inline-flex;gap:8px;align-items:center}
-#card{position:fixed;z-index:25;left:50%;top:50%;width:min(88vw,420px);transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:28px 24px 22px;text-align:center;border-radius:26px;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(8,10,28,.88);border:1px solid rgba(255,255,255,.28);box-shadow:0 0 40px rgba(0,243,255,.35),0 0 90px rgba(188,19,254,.3),inset 0 0 30px rgba(255,255,255,.05);transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1)}
+#hud{position:fixed;top:max(12px,env(safe-area-inset-top));left:0;right:0;z-index:10;display:none;justify-content:center;pointer-events:none;font-size:14px;color:var(--text);text-align:center;padding:0 16px}
+#hud span{background:rgba(4,16,36,.62);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:8px 16px;display:inline-flex;gap:8px;align-items:center}
+#card{position:fixed;z-index:25;left:50%;top:50%;width:min(88vw,420px);transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:28px 24px 22px;text-align:center;border-radius:26px;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(6,20,46,.9);border:1px solid rgba(255,255,255,.28);box-shadow:0 0 40px rgba(255,138,31,.3),0 0 90px rgba(77,163,255,.28),inset 0 0 30px rgba(255,255,255,.05);transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1)}
 #card.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 #card .t{color:var(--green);font-size:13px;margin-bottom:14px;text-shadow:0 0 10px var(--green)}
-#msg{font-size:clamp(22px,6.5vw,30px);font-weight:700;line-height:1.7;min-height:3.4em;text-shadow:0 0 14px var(--cyan),0 0 30px var(--violet);word-break:break-word}
-#msg::after{content:"▍";color:var(--cyan);animation:pulse .8s infinite;margin-inline-start:2px}
+#msg{font-size:clamp(22px,6.5vw,30px);font-weight:700;line-height:1.7;min-height:3.4em;text-shadow:0 0 14px rgba(255,138,31,.6),0 0 30px rgba(77,163,255,.5);word-break:break-word}
+#msg::after{content:"▍";color:var(--acc);animation:pulse .8s infinite;margin-inline-start:2px}
 #msg.done::after{content:""}
 #card .btn{margin-top:18px;padding:12px;font-size:15px}
 </style>
@@ -53,6 +55,38 @@ input.num{font-size:34px;letter-spacing:12px;font-weight:700;direction:ltr;borde
 
 <section class="screen on" id="sRole">
   <div class="box">
+    <svg class="logo" viewBox="0 0 240 112" aria-hidden="true">
+      <defs>
+        <radialGradient id="lgBall" cx="35%" cy="30%" r="75%">
+          <stop offset="0" stop-color="#fff1dc"/><stop offset=".3" stop-color="#ffb561"/>
+          <stop offset=".75" stop-color="#ff8a1f"/><stop offset="1" stop-color="#b84e00"/>
+        </radialGradient>
+        <radialGradient id="lgRed" cx="35%" cy="30%" r="80%">
+          <stop offset="0" stop-color="#ff6b5e"/><stop offset=".6" stop-color="#d9261b"/><stop offset="1" stop-color="#8e0f09"/>
+        </radialGradient>
+        <radialGradient id="lgBlk" cx="35%" cy="30%" r="80%">
+          <stop offset="0" stop-color="#4a4f5c"/><stop offset=".6" stop-color="#1c1f27"/><stop offset="1" stop-color="#07080b"/>
+        </radialGradient>
+        <linearGradient id="lgWood" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#f0c98c"/><stop offset=".5" stop-color="#c18a50"/><stop offset="1" stop-color="#8a5a2c"/>
+        </linearGradient>
+      </defs>
+      <g transform="translate(74 44) rotate(-25)">
+        <rect x="-8" y="28" width="16" height="44" rx="7" fill="url(#lgWood)"/>
+        <ellipse cx="0" cy="0" rx="34" ry="36" fill="#d9a867"/>
+        <ellipse cx="0" cy="-1" rx="32" ry="34" fill="url(#lgRed)" stroke="#2b0a08" stroke-width="2"/>
+        <ellipse cx="-10" cy="-16" rx="13" ry="7" fill="#fff" opacity=".22" transform="rotate(-30 -10 -16)"/>
+      </g>
+      <g transform="translate(166 44) rotate(25)">
+        <rect x="-8" y="28" width="16" height="44" rx="7" fill="url(#lgWood)"/>
+        <ellipse cx="0" cy="0" rx="34" ry="36" fill="#d9a867"/>
+        <ellipse cx="0" cy="-1" rx="32" ry="34" fill="url(#lgBlk)" stroke="#000" stroke-width="2"/>
+        <ellipse cx="-10" cy="-16" rx="13" ry="7" fill="#fff" opacity=".22" transform="rotate(-30 -10 -16)"/>
+      </g>
+      <ellipse cx="124" cy="96" rx="13" ry="4" fill="#000" opacity=".35"/>
+      <circle cx="120" cy="78" r="13" fill="url(#lgBall)"/>
+      <ellipse cx="115" cy="73" rx="4" ry="2.6" fill="#fff" opacity=".75" transform="rotate(-40 115 73)"/>
+    </svg>
     <h1>Quantum Pong</h1>
     <p class="sub">بينغ بونغ عبر شاشتين<br>ضع الهاتفين جنباً إلى جنب (بالطول) لتصبح الطاولة شاشة واحدة، والكرة تعبر بينهما</p>
     <button class="btn" id="bSend">الهاتف الأول (اليسار - المضيف)<small>تنشئ الغرفة وتتحكم بالمضرب الأيسر</small></button>
@@ -105,7 +139,10 @@ const ICE=[
 const PEER_OPTS=()=>({debug:0,config:{iceServers:ICE,iceCandidatePoolSize:4}});
 
 /* ---------- Game constants (world: height = 1, width = aL + aR) ---------- */
-const BR=.032, PH=.22, PT=.03, PX=.045, BASE=.75, MAXS=2.1, WIN=7;
+// PX moved in from .045 to .12 so the whole paddle (blade + handle) fits on screen
+const BR=.032, PH=.22, PT=.03, PX=.12, BASE=.75, MAXS=2.1, WIN=7;
+// fake "height above the table" profile used only for drawing (hand height / peak / rebound hop)
+const Z0=.3, ZP=.42, ZP2=.28;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 /* ---------- State ---------- */
@@ -113,7 +150,8 @@ let aR=.5;                       // host: right phone aspect (W/H), reported by 
 let myY=.5, myPad=.5, remoteY=.5, lastSentY=-1, lastSentT=0;
 const G={bx:.5,by:.5,vx:0,vy:0,ly:.5,ry:.5,sl:0,sr:0,st:'wait',cd:0,serveAt:0,dir:1,speed:BASE,winner:''};
 let pk=null,pkT=0;               // guest: last packet
-let evq=[],trail=[],flashes=[];
+let evq=[],trail=[],rings=[];
+let padKick=0,bDir=0,bSide=0,bT=0;
 
 function resize(){dpr=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
   if(role==='recv')send({t:'dim',a:W/H})}
@@ -123,16 +161,22 @@ addEventListener('resize',resize);resize();
 let ac=null;
 function unlock(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}}
 function beep(f,d=.08,type='sine',v=.15){if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+// short hollow "pok" like a celluloid ball on a bat / table
+function pok(f=700,v=.2){if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.type='triangle';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*.45,t+.07);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.09);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.1)}catch(e){}}
+function tok(){pok(1050,.12)}
 function vib(p){if(navigator.vibrate)navigator.vibrate(p)}
 function ballLocalX(){return role==='send'?G.bx:G.bx-(pk?pk.aL:.5)}
 function playEv(e){
-  if(e==='hl'){if(role==='send'){beep(520);vib(25);flashAt(PX,G.by)}}
-  else if(e==='hr'){if(role==='recv'){beep(640);vib(25)}}
-  else if(e==='w'){const x=ballLocalX();if(x>-.05&&x<W/H+.05)beep(300,.05,'triangle')}
+  if(e==='hl'){if(role==='send'){pok(720);vib(25);hitFx()}}
+  else if(e==='hr'){if(role==='recv'){pok(720);vib(25);hitFx()}}
+  else if(e==='w'){const x=ballLocalX();if(x>-.05&&x<W/H+.05)tok()}
   else if(e==='pt'){beep(170,.35,'sawtooth',.12);vib([60,40,60]);doFlash()}
   else if(e==='win'){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.2,'sine',.18),i*130));vib([100,50,100,50,300])}
 }
-function flashAt(){}
+function hitFx(){
+  padKick=performance.now();
+  rings.push({x:role==='send'?(PX+PT/2)*H:W-(PX+PT/2)*H,y:G.by*H,r:BR*H*.7,a:1,hit:1});
+}
 function doFlash(){const f=$('flash');f.style.transition='none';f.style.opacity='.35';requestAnimationFrame(()=>{f.style.transition='opacity .5s ease-out';f.style.opacity='0'})}
 
 /* ---------- UI helpers ---------- */
@@ -284,55 +328,222 @@ function showResult(){
 }
 function hideResult(){cardOn=false;$('card').classList.remove('on')}
 $('bAgain').onclick=()=>{if(role==='send')restart();else send({t:'rematch'})};
-// host: result text should reflect winner computed in point()
-const _show=showResult;
 
-/* ---------- Drawing ---------- */
-function drawBall(x,y,r,t){
-  ctx.save();ctx.globalCompositeOperation='lighter';
-  let g=ctx.createRadialGradient(x,y,r*.1,x,y,r*2.6);
-  g.addColorStop(0,'rgba(0,243,255,.55)');g.addColorStop(.45,'rgba(188,19,254,.28)');g.addColorStop(1,'rgba(188,19,254,0)');
-  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*2.6,0,7);ctx.fill();
-  g=ctx.createRadialGradient(x-r*.25,y-r*.3,r*.05,x,y,r);
-  g.addColorStop(0,'#fff');g.addColorStop(.35,'#7ffaff');g.addColorStop(.75,'#00f3ff');g.addColorStop(1,'#bc13fe');
-  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
-  ctx.lineWidth=2;ctx.strokeStyle='rgba(16,185,129,.9)';ctx.setLineDash([r*.4,r*.25]);ctx.lineDashOffset=-t*40;
-  ctx.beginPath();ctx.arc(x,y,r*1.35,0,7);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+/* =====================================================================
+   Drawing — realistic top-down table tennis
+   Light comes from the top-left, so every shadow falls to the right/down.
+   Each phone draws its own half of one continuous table; the net sits on
+   the seam and each phone shows its half of it.
+   ===================================================================== */
+function rr(c,x,y,w,h,r){r=Math.min(r,w/2,h/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+// ellipse filled in "unit space" so gradients can be written for a unit circle
+function ell(c,cx,cy,rx,ry,fill){c.save();c.translate(cx,cy);c.scale(rx,ry);c.beginPath();c.arc(0,0,1,0,7);c.fillStyle=fill;c.fill();c.restore()}
+
+// geometry shared by both phones: widths of the left/right halves in world units
+function geom(){
+  const isL=role==='send';
+  const aLw=isL?W/H:(pk?pk.aL:W/H);
+  const aRw=isL?aR:W/H;
+  return {isL,aLw,aRw,WW:aLw+aRw,off:isL?0:aLw};
 }
-function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
-function draw(t){
-  const S=H,isL=role==='send';
-  ctx.clearRect(0,0,W,H);
-  const col=isL?'#00f3ff':'#bc13fe';
-  // table borders
-  ctx.save();ctx.shadowColor=col;ctx.shadowBlur=14;ctx.strokeStyle=col;ctx.globalAlpha=.7;ctx.lineWidth=3;
-  ctx.beginPath();ctx.moveTo(0,1.5);ctx.lineTo(W,1.5);ctx.moveTo(0,H-1.5);ctx.lineTo(W,H-1.5);ctx.stroke();
-  // seam / net
-  ctx.setLineDash([14,12]);ctx.lineDashOffset=-t*20;ctx.strokeStyle='#10b981';ctx.shadowColor='#10b981';
-  const nx=isL?W-2:2;ctx.beginPath();ctx.moveTo(nx,0);ctx.lineTo(nx,H);ctx.stroke();ctx.restore();
-  // scores near the seam
-  ctx.save();ctx.font='800 '+Math.round(S*.14)+'px Rubik,sans-serif';ctx.textBaseline='top';ctx.globalAlpha=.55;ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=18;
-  if(isL){ctx.textAlign='right';ctx.fillText(String(G.sl),W-S*.06,S*.1)}else{ctx.textAlign='left';ctx.fillText(String(G.sr),S*.06,S*.1)}
-  ctx.restore();
-  // paddle (own side only)
-  const py=(isL?G.ly:myPad)*S,ph=PH*S,pt=PT*S;
-  const pcx=isL?PX*S:W-PX*S;
-  ctx.save();ctx.shadowColor=col;ctx.shadowBlur=22;ctx.fillStyle=col;rrect(pcx-pt/2,py-ph/2,pt,ph,pt/2);ctx.fill();ctx.restore();
-  // ball
-  const started2=(role==='send')?started&&connected:!!pk;
-  if(started2&&G.st!=='over'){
-    const lx=(isL?G.bx:G.bx-(pk?pk.aL:.5))*S,lyy=G.by*S,r=BR*S;
-    if(G.st==='play')trail.push({x:lx,y:lyy,r:r*1.1,a:1});
-    drawBall(lx,lyy,r,t);
+
+/* ---------- Static layer: table surface, lines, net (cached) ---------- */
+const tcv=document.createElement('canvas'),tctx=tcv.getContext('2d');
+let tKey='';
+const noiseCv=document.createElement('canvas');noiseCv.width=noiseCv.height=128;
+(()=>{const c=noiseCv.getContext('2d'),im=c.createImageData(128,128),d=im.data;
+  for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=Math.random()*16|0}
+  c.putImageData(im,0,0)})();
+
+function buildTable(g){
+  const S=H,c=tctx,isL=g.isL,WW=g.WW,off=g.off;
+  tcv.width=Math.round(W*dpr);tcv.height=Math.round(H*dpr);
+  c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+
+  // surface: satin blue, lit by one spot that is continuous across both phones
+  c.fillStyle='#124a9c';c.fillRect(0,0,W,H);
+  const cxw=(WW/2-off)*S;
+  let gr=c.createRadialGradient(cxw,H*.45,0,cxw,H*.45,Math.max(WW,.5)*S*.8);
+  gr.addColorStop(0,'rgba(70,150,255,.55)');gr.addColorStop(.55,'rgba(20,80,170,.12)');gr.addColorStop(1,'rgba(2,10,40,.6)');
+  c.fillStyle=gr;c.fillRect(0,0,W,H);
+  gr=c.createLinearGradient(-off*S,0,(WW-off)*S,H);
+  gr.addColorStop(0,'rgba(255,255,255,.10)');gr.addColorStop(.5,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(255,255,255,.04)');
+  c.fillStyle=gr;c.fillRect(0,0,W,H);
+  // fine grain (drawn in device pixels so it stays fine on high-dpi screens)
+  c.save();c.setTransform(1,0,0,1,0,0);c.fillStyle=c.createPattern(noiseCv,'repeat');c.fillRect(0,0,tcv.width,tcv.height);c.restore();
+
+  // table edge + white boundary lines (outer end line only on the outside of each phone)
+  const e=S*.008,lw=S*.014;
+  c.fillStyle='#06142c';
+  c.fillRect(0,0,W,e);c.fillRect(0,H-e,W,e);
+  if(isL)c.fillRect(0,0,e,H);else c.fillRect(W-e,0,e,H);
+  const x0=isL?e:0,x1=isL?W:W-e;
+  c.fillStyle='#f3f7ff';
+  c.fillRect(x0,e,x1-x0,lw);c.fillRect(x0,H-e-lw,x1-x0,lw);
+  if(isL)c.fillRect(e,e,lw,H-2*e);else c.fillRect(W-e-lw,e,lw,H-2*e);
+  // centre line (runs the length of the table, towards the net)
+  const cl=S*.006,cx0=isL?e+lw:0,cx1=isL?W:W-e-lw;
+  c.fillStyle='rgba(243,247,255,.88)';c.fillRect(cx0,(H-cl)/2,cx1-cx0,cl);
+
+  // ----- net on the seam (shapes are centred on the seam; the screen edge clips each half) -----
+  const xs=isL?W:0,sg=isL?-1:1;
+  const hw=S*.026;                              // half width of the net strip
+  const shW=isL?S*.04:S*.075;                   // light from the left → longer shadow on the right half
+  const gx0=xs+sg*hw,gx1=xs+sg*(hw+shW);
+  gr=c.createLinearGradient(gx0,0,gx1,0);gr.addColorStop(0,'rgba(0,10,30,.55)');gr.addColorStop(1,'rgba(0,10,30,0)');
+  c.fillStyle=gr;c.fillRect(Math.min(gx0,gx1),0,shW,H);
+  // mesh
+  c.save();c.beginPath();c.rect(xs-hw,0,hw*2,H);c.clip();
+  c.fillStyle='rgba(6,16,38,.62)';c.fillRect(xs-hw,0,hw*2,H);
+  const sp=S*.018,nk=Math.ceil((H+hw)/sp)+1,hk=Math.ceil(hw/sp)+1;
+  c.strokeStyle='rgba(235,243,255,.55)';c.lineWidth=Math.max(.6,S*.0016);c.beginPath();
+  for(let k=-nk;k<=hk;k++){c.moveTo(xs-hw,-hw-k*sp);c.lineTo(xs+hw,hw-k*sp)}
+  for(let k=-hk;k<=nk;k++){c.moveTo(xs-hw,k*sp+hw);c.lineTo(xs+hw,k*sp-hw)}
+  c.stroke();c.restore();
+  // mesh side edges
+  c.fillStyle='rgba(255,255,255,.35)';const ew=Math.max(1,S*.0016);
+  c.fillRect(xs-hw,0,ew,H);c.fillRect(xs+hw-ew,0,ew,H);
+  // white top tape
+  const tw=S*.014;
+  c.fillStyle='#f6f9ff';c.fillRect(xs-tw/2,0,tw,H);
+  c.fillStyle='rgba(0,10,30,.25)';c.fillRect(xs+tw/2,0,Math.max(1,S*.002),H);
+  // post clamps top & bottom
+  const pw=S*.036,pl=S*.062;
+  for(const top of [true,false]){
+    const y=top?-S*.02:H-pl,cy=top?pl*.5:H-pl*.5;
+    gr=c.createLinearGradient(xs-pw,0,xs+pw,0);gr.addColorStop(0,'#232a38');gr.addColorStop(.5,'#b4c0d4');gr.addColorStop(1,'#232a38');
+    c.fillStyle='rgba(0,8,26,.4)';rr(c,xs-pw+S*.006,y+S*.008,pw*2,pl+S*.02,S*.008);c.fill();
+    c.fillStyle=gr;rr(c,xs-pw,y,pw*2,pl+S*.02,S*.008);c.fill();
+    c.strokeStyle='rgba(0,0,0,.45)';c.lineWidth=Math.max(1,S*.002);c.stroke();
+    ell(c,xs,cy,S*.011,S*.011,'#e9eef8');
+    c.strokeStyle='#27303f';c.lineWidth=Math.max(1,S*.002);c.beginPath();c.arc(xs,cy,S*.011,0,7);c.stroke();
   }
-  // trail
-  ctx.save();ctx.globalCompositeOperation='lighter';
-  for(const p of trail){const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);g.addColorStop(0,'rgba(0,243,255,'+p.a*.45+')');g.addColorStop(1,'rgba(188,19,254,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();p.a-=.08;p.r*=.97}
-  trail=trail.filter(p=>p.a>0);ctx.restore();
-  // countdown
+}
+
+/* ---------- Paddle (red / black rubber, wooden handle) ---------- */
+function drawPaddle(fx,y,dir,S,black,kick){
+  const c=ctx,rx=S*.034,ry=S*PH/2,th=S*.014;
+  const cx=fx-dir*(rx+kick*S*.014);
+  // soft shadow on the table
+  c.save();c.translate(cx+S*.024,y+S*.032);c.scale(rx*1.35,ry*1.04);
+  const sh=c.createRadialGradient(0,0,.3,0,0,1.1);sh.addColorStop(0,'rgba(0,8,30,.42)');sh.addColorStop(1,'rgba(0,8,30,0)');
+  c.fillStyle=sh;c.beginPath();c.arc(0,0,1.1,0,7);c.fill();c.restore();
+
+  c.save();c.translate(cx,y);c.scale(dir,1);   // local +x points towards the net
+  // handle
+  const hh=S*.019,hx1=-rx-th-S*.14,hx0=-rx*.4;
+  let gh=c.createLinearGradient(0,-hh,0,hh);gh.addColorStop(0,'#f0c98c');gh.addColorStop(.5,'#c18a50');gh.addColorStop(1,'#8a5a2c');
+  c.fillStyle=gh;rr(c,hx1,-hh,hx0-hx1,hh*2,hh*.7);c.fill();
+  c.fillStyle='rgba(60,30,10,.32)';
+  for(let i=0;i<3;i++)c.fillRect(hx1+S*.024+i*S*.012,-hh,S*.004,hh*2);
+  // layers: back rubber → plywood edge → front rubber (gives the blade thickness)
+  const front=black?['#4a4f5c','#1c1f27','#07080b','#000']:['#ff6b5e','#d9261b','#8e0f09','#2b0a08'];
+  ell(c,-th,0,rx,ry,black?'#a52a22':'#161616');
+  ell(c,-th*.5,0,rx,ry,'#d9a867');
+  const gf=c.createRadialGradient(-.25,-.3,.05,0,0,1.1);
+  gf.addColorStop(0,front[0]);gf.addColorStop(.55,front[1]);gf.addColorStop(1,front[2]);
+  ell(c,0,0,rx,ry,gf);
+  c.strokeStyle=front[3];c.lineWidth=Math.max(1.5,S*.0035);c.beginPath();c.ellipse(0,0,rx,ry,0,0,7);c.stroke();
+  // gloss
+  c.save();c.beginPath();c.ellipse(0,0,rx*.94,ry*.96,0,0,7);c.clip();
+  c.fillStyle='rgba(255,255,255,'+(black?.12:.18)+')';
+  c.beginPath();c.ellipse(-rx*.25,-ry*.42,rx*.5,ry*.36,-.2,0,7);c.fill();c.restore();
+  c.restore();
+}
+
+/* ---------- Ball (orange celluloid, rolling logo mark, specular) ---------- */
+function drawBall(x,y,r,z,spin){
+  const c=ctx,R=r*(1+z*.3);
+  c.save();
+  const g=c.createRadialGradient(x-R*.35,y-R*.4,R*.05,x,y,R);
+  g.addColorStop(0,'#fff1dc');g.addColorStop(.25,'#ffb561');g.addColorStop(.7,'#ff8a1f');g.addColorStop(1,'#b84e00');
+  c.fillStyle=g;c.beginPath();c.arc(x,y,R,0,7);c.fill();
+  c.save();c.beginPath();c.arc(x,y,R,0,7);c.clip();c.translate(x,y);c.rotate(spin);
+  c.strokeStyle='rgba(120,50,0,.35)';c.lineWidth=Math.max(1,R*.07);c.beginPath();c.arc(R*.38,0,R*.22,0,7);c.stroke();c.restore();
+  const lw=Math.max(1,R*.06);c.strokeStyle='rgba(90,35,0,.35)';c.lineWidth=lw;c.beginPath();c.arc(x,y,R-lw/2,0,7);c.stroke();
+  c.fillStyle='rgba(255,255,255,.75)';c.beginPath();c.ellipse(x-R*.32,y-R*.38,R*.2,R*.13,-.7,0,7);c.fill();
+  c.restore();
+}
+
+/* ---------- Per-frame drawing ---------- */
+function draw(t){
+  const S=H,g=geom(),isL=g.isL,aLw=g.aLw,aRw=g.aRw,WW=g.WW,off=g.off;
+  const key=W+'x'+H+'@'+dpr+(role||'')+aLw.toFixed(3)+aRw.toFixed(3);
+  if(key!==tKey){tKey=key;buildTable(g)}
+  ctx.clearRect(0,0,W,H);
+  ctx.drawImage(tcv,0,0,W,H);
+  const now=performance.now();
+
+  const started2=isL?started&&connected:!!pk;
+  const showBall=started2&&G.st!=='over';
+  const lx=(G.bx-off)*S,ly=G.by*S,r=BR*S;
+  const vx=isL?G.vx:(pk?pk.vx:0);
+
+  // fake height above the table: hand height at the bat, arcs over the net, touches the table once on the far half
+  let z=0,dir=0,side=0;
+  if(showBall){
+    if(G.st==='play'&&vx){
+      dir=vx>0?1:-1;
+      const face=PX+PT/2+BR,xm=dir>0?G.bx:WW-G.bx,net=dir>0?aLw:aRw,xp=WW-face;
+      const xb=net+(xp-net)*.45;
+      if(xm<=xb){const u=clamp((xm-face)/Math.max(.05,xb-face),0,1);z=Z0*(1-u)+ZP*4*u*(1-u)}
+      else{side=1;const u=clamp((xm-xb)/Math.max(.05,xp-xb),0,1);z=Z0*u+ZP2*4*u*(1-u)}
+    }else z=.5+.04*Math.sin(t*5);
+    if(dir&&dir===bDir&&bSide===0&&side===1&&now-bT>200){
+      bT=now;rings.push({x:lx,y:ly,r:r*.6,a:1});
+      if(lx>-r&&lx<W+r)tok();
+    }
+    bDir=dir;bSide=side;
+  }else{bDir=0;bSide=0}
+
+  // scores, painted large near the seam
+  ctx.save();ctx.font='800 '+Math.round(S*.14)+'px Rubik,sans-serif';ctx.textBaseline='top';
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.shadowColor='rgba(0,10,40,.6)';ctx.shadowBlur=10*dpr;ctx.shadowOffsetY=3*dpr;
+  if(isL){ctx.textAlign='right';ctx.fillText(String(G.sl),W-S*.075,S*.1)}else{ctx.textAlign='left';ctx.fillText(String(G.sr),S*.075,S*.1)}
+  ctx.restore();
+
+  // ripples on the table (ball bounce) and bat-hit sparks
+  ctx.save();
+  for(const q of rings){
+    ctx.strokeStyle='rgba(255,255,255,'+(q.a*(q.hit?.8:.5))+')';
+    ctx.lineWidth=Math.max(1.5,S*(q.hit?.006:.004)*q.a);
+    ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,7);ctx.stroke();
+    q.r+=S*(q.hit?.012:.006);q.a-=q.hit?.07:.05;
+  }
+  ctx.restore();rings=rings.filter(q=>q.a>0);
+
+  // ball shadow: sharp under the ball when it touches the table, soft and displaced when it is high
+  if(showBall){
+    ctx.save();
+    const sx=lx+S*(.012+z*.045),sy=ly+S*(.016+z*.06),sr=r*(1.2+z*.8);
+    ctx.globalAlpha=clamp(.55-z*.3,.18,.55);
+    const gsh=ctx.createRadialGradient(sx,sy,sr*.15,sx,sy,sr);
+    gsh.addColorStop(0,'rgba(0,8,30,.9)');gsh.addColorStop(1,'rgba(0,8,30,0)');
+    ctx.fillStyle=gsh;ctx.beginPath();ctx.ellipse(sx,sy,sr,sr*.88,0,0,7);ctx.fill();
+    ctx.restore();
+  }
+
+  // faint motion streak
+  if(showBall&&G.st==='play')trail.push({x:lx,y:ly,r:r,a:1});
+  ctx.save();
+  for(const p of trail){
+    ctx.fillStyle='rgba(255,176,96,'+(p.a*.22)+')';
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r*(.5+.5*p.a),0,7);ctx.fill();p.a-=.1;
+  }
+  ctx.restore();trail=trail.filter(p=>p.a>0);
+
+  // own paddle only (the other one lives on the other phone)
+  const kick=Math.max(0,1-(now-padKick)/140);
+  const py=(isL?G.ly:myPad)*S,faceX=(PX+PT/2)*S;
+  drawPaddle(isL?faceX:W-faceX,py,isL?1:-1,S,!isL,kick);
+
+  // ball
+  if(showBall)drawBall(lx,ly,r,z,(G.bx*S+G.by*S*.7)/r);
+
+  // serve countdown
   if(G.st==='serve'&&started2){
     ctx.save();ctx.font='800 '+Math.round(S*.2)+'px Rubik,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle='#e8f6ff';ctx.globalAlpha=.8;ctx.shadowColor='#00f3ff';ctx.shadowBlur=30;
+    ctx.fillStyle='#fff';ctx.globalAlpha=.85;ctx.shadowColor='rgba(255,138,31,.9)';ctx.shadowBlur=28*dpr;
     ctx.fillText(String(G.cd||''),W/2,H*.3);ctx.restore();
   }
 }
